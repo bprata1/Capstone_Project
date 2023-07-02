@@ -42,10 +42,12 @@ app.layout = html.Div(children=[html.H1('SpaceX Launch Records Dashboard',
 
                                 html.P("Payload range (Kg):"),
                                 # TASK 3: Add a slider to select payload range
-                                #dcc.RangeSlider(id='payload-slider',...)
+                                dcc.RangeSlider(id='payload-slider', min=0, max=10000, step=1000,
+                                value=[min_payload, max_payload]
+                                )
 
                                 # TASK 4: Add a scatter chart to show the correlation between payload and launch success
-                                html.Div(dcc.Graph(id='success-payload-scatter-chart')),
+                                #html.Div(dcc.Graph(id='success-payload-scatter-chart')),
                                 ])
 
 # TASK 2:
@@ -63,16 +65,25 @@ def get_pie_chart(entered_site):
         title='Total Success Launches By Site')
         return fig
     else:
-        data = filtered_df[filtered_df['Launch Site']==str(entered_site)]
-        #data = filtered_df.groupby('Launch Site')['class'].sum()
-        fig = px.pie(data, values='class', 
-        title='Total Success Launches For Site '&str(entered_site))
+        filtered_df=spacex_df[spacex_df['Launch Site']== entered_site]
+        filtered_df=filtered_df.groupby(['Launch Site','class']).size().reset_index(name='class count')
+        fig=px.pie(filtered_df,values='class count',names='class',title=f"Total Success Launches for site {entered_site}")
         return fig
         # return the outcomes piechart for a selected site
 
 # TASK 4:
 # Add a callback function for `site-dropdown` and `payload-slider` as inputs, `success-payload-scatter-chart` as output
+@app.callback(Output(component_id='success-payload-scatter-chart', component_property='figure'),
+              [Input(component_id='site-dropdown', component_property='value'),
+              Input(component_id='payload-slider', component_property='value')])
+def get_scatter_chart(entered_site):
+    filtered_df = spacex_df
+    if entered_site == 'ALL':
+        fig = px.scatter(filtered_df, x="Payload Mass (kg)", y="class", color="Booster Version Category")
+        return fig
+    else:
 
+        return fig
 
 # Run the app
 if __name__ == '__main__':
